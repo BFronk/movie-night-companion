@@ -144,10 +144,6 @@ body {
 /* BROWSE */
 
 .search-input {
-  width: 100%;
-  max-width: 400px;
-  margin: 0 auto 2rem;
-  display: block;
   padding: 0.6rem 0.8rem;
   font-size: 1rem;
   border-radius: 8px;
@@ -163,14 +159,61 @@ body {
 
 .empty-state {
   text-align: center;
-  color: #6b7280;
+  color: #212121;
   padding: 2rem 0;
   font-size: 0.95rem;
 }
 
+
+.browse-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
 .browse-btn,
-.genre-select {
-  margin-right: 0.5rem;
-  padding: 0.4rem 0.6rem;
+.genre-select,
+.search-input {
+  height: 38px;
+  padding: 0 0.75rem;
   font-size: 0.9rem;
+  border-radius: 6px;
+}
+
+/* Prominent search input styling */
+.browse-controls .search-input {
+  color: #544979;
+  background-color: #cbcaca;
+  border: 1px solid #c7d2fe;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.browse-controls .search-input:focus {
+  outline: none;
+  border-color: #4338ca;
+  box-shadow: 0 0 0 3px rgba(67, 56, 202, 0.25);
+}
+
+.browse-controls .search-input::placeholder {
+  color: #6b7280;      /* slightly darker gray */
+  font-weight: 500;    /* bolder so it reads clearly when empty */
+}
+
+.genre-select {
+  cursor: pointer;
+}
+
+.search-input {
+  min-width: 220px;
+}
+
+.search-input.full-width {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto 2rem;
+  display: block;
 }
