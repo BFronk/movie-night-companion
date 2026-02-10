@@ -28,19 +28,19 @@ export default function FeaturedRow(movies = []) {
           textContent: `⭐ ${movie.vote_average}`
         }),
         createElement(
-          "button",
-          {
-            className: "watchlist-btn",
-            onclick: () =>
-              addToWatchlist({
-                id: movie.id,
-                title: movie.title,
-                poster_path: movie.poster_path,
-                vote_average: movie.vote_average
-              })
-          },
-          "Add to Watchlist"
-        )
+  "button",
+  {
+    className: "watchlist-btn",
+    onclick: () =>
+      addToWatchlist({
+        id: movie.id,
+        title: movie.title,
+        poster_path: movie.poster_path,
+        vote_average: movie.vote_average
+      })
+  },
+  "Add to Watchlist"
+    )
       )
     );
 
