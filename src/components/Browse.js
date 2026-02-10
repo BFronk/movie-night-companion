@@ -6,14 +6,21 @@ import {
   getPopularMovies,
   searchMovies
 } from "../services/tmdb.js";
+import {
+  getBrowseState,
+  setBrowseState
+} from "../services/browseState.js";
 
 export default function Browse() {
   const container = createElement("div");
 
+  const { mode, query } = getBrowseState();
+
   const searchInput = createElement("input", {
     type: "search",
     placeholder: "Search movies...",
-    className: "search-input"
+    className: "search-input",
+    value: query
   });
 
   const resultsContainer = createElement("div", {
@@ -62,18 +69,25 @@ export default function Browse() {
   }
 
   // Initial load: popular movies
+  if (mode === "search" && query) {
+  renderMovies(searchMovies(query));
+} else {
   renderMovies(getPopularMovies());
+}
 
   searchInput.addEventListener("keydown", e => {
-    if (e.key === "Enter") {
-      const query = searchInput.value.trim();
-      if (query) {
-        renderMovies(searchMovies(query));
-      } else {
-        renderMovies(getPopularMovies());
-      }
+  if (e.key === "Enter") {
+    const value = searchInput.value.trim();
+
+    if (value) {
+      setBrowseState({ mode: "search", query: value });
+      renderMovies(searchMovies(value));
+    } else {
+      setBrowseState({ mode: "popular", query: "" });
+      renderMovies(getPopularMovies());
     }
-  });
+  }
+});
 
   return container;
 }
