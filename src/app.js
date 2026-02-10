@@ -1,9 +1,18 @@
+import createElement from "./utils/createElement.js";
+import Watchlist from "./components/Watchlist.js";
+
 export default function App() {
-  const container = document.createElement("div");
-  const heading = document.createElement("h1");
+  const header = createElement("h1", {
+    textContent: "My Watchlist",
+    className: "app-title"
+  });
 
-  heading.textContent = "Movie Night Companion is working 🚀";
-  container.append(heading);
+  const main = createElement(
+    "main",
+    { className: "main-content" },
+    Watchlist()
+  );
 
-  return container;
+  return createElement("div", { className: "app" }, header, main);
 }
+
