@@ -4,7 +4,7 @@ export function getBrowseState() {
   const data = localStorage.getItem(STORAGE_KEY);
   return data
     ? JSON.parse(data)
-    : { mode: "popular", query: "" };
+    : { mode: "popular", query: "", genreId: null };
 }
 
 export function setBrowseState(state) {

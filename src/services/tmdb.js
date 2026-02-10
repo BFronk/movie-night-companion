@@ -28,3 +28,11 @@ export async function searchMovies(query) {
   const data = await response.json();
   return data.results;
 }
+
+export async function getMoviesByGenre(genreId) {
+  const res = await fetch(
+    `${BASE_URL}/discover/movie?with_genres=${genreId}&api_key=${API_KEY}`
+  );
+  const data = await res.json();
+  return data.results;
+}

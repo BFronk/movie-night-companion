@@ -11,6 +11,26 @@ import {
   setBrowseState
 } from "../services/browseState.js";
 
+const GENRES = [
+  { id: 28, name: "Action" },
+  { id: 12, name: "Adventure" },
+  { id: 35, name: "Comedy" },
+  { id: 18, name: "Drama" },
+  { id: 27, name: "Horror" },
+  { id: 878, name: "Sci-Fi" }
+];
+
+const popularBtn = createElement("button", {
+  textContent: "Popular",
+  className: "browse-btn"
+});
+
+popularBtn.addEventListener("click", () => {
+  setBrowseState({ mode: "popular", query: "", genreId: null });
+  searchInput.value = "";
+  renderMovies(getPopularMovies());
+});
+
 export default function Browse() {
   const container = createElement("div");
 
@@ -27,7 +47,42 @@ export default function Browse() {
     className: "main-content"
   });
 
-  container.append(searchInput, resultsContainer);
+  GENRES.forEach(genre => {
+    genreSelect.append(
+      createElement(
+        "option",
+        { value: genre.id },
+        genre.name
+      )
+    );
+  });
+  
+  genreSelect.addEventListener("change", () => {
+    const genreId = genreSelect.value;
+  
+    if (!genreId) return;
+  
+    setBrowseState({
+      mode: "category",
+      query: "",
+      genreId
+    });
+
+
+  container.append(popularBtn, genreSelect, searchInput, resultsContainer);
+
+const genreSelect = createElement("select", {
+  className: "genre-select"
+});
+
+genreSelect.append(
+  createElement("option", { value: "" }, "Browse by Genre")
+);
+
+
+  searchInput.value = "";
+  renderMovies(getMoviesByGenre(genreId));
+});
 
   function renderMovies(promise) {
     resultsContainer.replaceChildren(
@@ -70,10 +125,14 @@ export default function Browse() {
 
   // Initial load: popular movies
   if (mode === "search" && query) {
-  renderMovies(searchMovies(query));
-} else {
-  renderMovies(getPopularMovies());
-}
+    searchInput.value = query;
+    renderMovies(searchMovies(query));
+    } else if (mode === "category" && genreId) {
+    genreSelect.value = genreId;
+    renderMovies(getMoviesByGenre(genreId));
+    } else {
+    renderMovies(getPopularMovies());
+}   
 
   searchInput.addEventListener("keydown", e => {
   if (e.key === "Enter") {
