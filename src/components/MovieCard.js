@@ -1,4 +1,5 @@
 import createElement from "../utils/createElement.js";
+import { rerenderApp } from "../utils/rerender.js";
 import {
   addToWatchlist,
   removeFromWatchlist
@@ -34,6 +35,7 @@ export default function MovieCard(movie, options = {}) {
     button.addEventListener("click", () => {
       removeFromWatchlist(movie.id);
       card.remove();
+      rerenderApp();
     });
   } else {
     button.textContent = "Add to Watchlist";
@@ -41,6 +43,7 @@ export default function MovieCard(movie, options = {}) {
       addToWatchlist(movie);
       button.textContent = "Added ✓";
       button.disabled = true;
+      rerenderApp();
     });
   }
 

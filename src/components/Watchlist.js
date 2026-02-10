@@ -6,8 +6,9 @@ export default function Watchlist() {
   const movies = getWatchlist();
 
   if (movies.length === 0) {
-    return createElement("p", {
-      textContent: "Your watchlist is empty."
+        return createElement("p", {
+    textContent: "Your watchlist is empty. Start browsing movies!",
+    className: "empty-state"
     });
   }
 
