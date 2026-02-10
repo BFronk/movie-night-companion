@@ -1,6 +1,7 @@
 import createElement from "../utils/createElement.js";
 import MovieCard from "./MovieCard.js";
 import Loading from "./Loading.js";
+import FeaturedRow from "./FeaturedRow.js";
 import { getWatchlist } from "../services/watchlist.js";
 import {
   getPopularMovies,
@@ -11,7 +12,8 @@ import {
   getBrowseState,
   setBrowseState
 } from "../services/browseState.js";
-import FeaturedRow from "./FeaturedRow.js";
+
+let searchTimeout;
 
 const GENRES = [
   { id: 28, name: "Action" },
@@ -27,10 +29,12 @@ const GENRES = [
   { id: 53, name: "Thriller" }
 ];
 
-export default function Browse() {
+export default function Browse(setAppState) {
   const container = createElement("div");
 
   const { mode, query, genreId } = getBrowseState();
+
+  /* ---------- Controls ---------- */
 
   const popularBtn = createElement("button", {
     textContent: "Popular",
@@ -58,51 +62,82 @@ export default function Browse() {
     value: query
   });
 
+  const controls = createElement(
+    "div",
+    { className: "browse-controls" },
+    popularBtn,
+    genreSelect,
+    searchInput
+  );
+
+  /* ---------- Containers ---------- */
+
+  const featuredContainer = createElement("div", {
+    className: "featured-wrapper"
+  });
+
   const resultsContainer = createElement("div", {
     className: "main-content"
   });
-  const featuredContainer = createElement("div", {
-  className: "featured-wrapper"
-  });
-  
+
+  container.append(controls, featuredContainer, resultsContainer);
+
+  /* ---------- Render Logic ---------- */
+
   async function renderMovies(fetchFn) {
-  resultsContainer.innerHTML = "";
-  featuredContainer.innerHTML = "";
-  resultsContainer.append(Loading());
+    const scrollY = window.scrollY;
 
-  const movies = await fetchFn();
-  const watchlist = getWatchlist();
-  const watchlistIds = new Set(watchlist.map(m => m.id));
+    featuredContainer.innerHTML = "";
+    resultsContainer.innerHTML = "";
+    resultsContainer.append(Loading());
 
-  let featuredMovies = [];
+    const movies = await fetchFn();
+    const watchlistIds = new Set(getWatchlist().map(m => m.id));
 
-  if (mode === "popular") {
-    featuredMovies = movies.slice(0, 6);
-  }
+    let featuredMovies = [];
 
-  if (mode === "search" && movies.length) {
-    featuredMovies = movies.slice(0, 4);
-  }
+    if (mode === "popular") {
+      featuredMovies = movies
+        .filter(movie => !watchlistIds.has(movie.id))
+        .slice(0, 6);
+    }
 
-  const featuredIds = new Set(featuredMovies.map(m => m.id));
+    if (mode === "category") {
+      featuredMovies = movies
+        .filter(movie => !watchlistIds.has(movie.id))
+        .slice(0, 4);
+    }
 
-  if (featuredMovies.length) {
-    featuredContainer.append(FeaturedRow(featuredMovies));
-  }
+    const featuredIds = new Set(featuredMovies.map(m => m.id));
 
-  resultsContainer.innerHTML = "";
+    if (featuredMovies.length) {
+      const featuredCards = featuredMovies.map(movie =>
+        MovieCard(movie, setAppState)
+        );
+        featuredContainer.append(
+        createElement("div", { className: "featured-label" }, "Featured")
+        );
+        featuredContainer.append(FeaturedRow(featuredCards));
+    }
 
-  movies
-    .filter(
-      movie =>
-        !watchlistIds.has(movie.id) &&
-        !featuredIds.has(movie.id)
-    )
-    .forEach(movie => {
-      resultsContainer.append(MovieCard(movie));
+    resultsContainer.innerHTML = "";
+
+    movies
+      .filter(
+        movie =>
+          !watchlistIds.has(movie.id) &&
+          !featuredIds.has(movie.id)
+      )
+      .forEach(movie => {
+        resultsContainer.append(MovieCard(movie, setAppState));
+      });
+
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: scrollY });
     });
-}
-  // EVENT LISTENERS 
+  }
+
+  /* ---------- Events ---------- */
 
   popularBtn.addEventListener("click", () => {
     setBrowseState({ mode: "popular", query: "", genreId: null });
@@ -124,29 +159,24 @@ export default function Browse() {
     renderMovies(() => getMoviesByGenre(selectedGenre));
   });
 
-  searchInput.addEventListener("keydown", e => {
-    if (e.key === "Enter") {
-      const value = searchInput.value.trim();
+  searchInput.addEventListener("input", () => {
+    const value = searchInput.value.trim();
+    clearTimeout(searchTimeout);
 
-      if (value) {
-        setBrowseState({ mode: "search", query: value, genreId: null });
-        renderMovies(() => searchMovies(value));
-      } else {
+    searchTimeout = setTimeout(() => {
+      if (!value) {
         setBrowseState({ mode: "popular", query: "", genreId: null });
         renderMovies(getPopularMovies);
+        return;
       }
-    }
+
+      setBrowseState({ mode: "search", query: value, genreId: null });
+      renderMovies(() => searchMovies(value));
+    }, 350);
   });
 
-  const controls = createElement("div",{ className: "browse-controls" },
-  popularBtn,
-  genreSelect,
-  searchInput
-);
+  /* ---------- Restore State ---------- */
 
-    container.append(controls, featuredContainer, resultsContainer);
-
-  //  RESTORE STATE
   if (mode === "search" && query) {
     renderMovies(() => searchMovies(query));
   } else if (mode === "category" && genreId) {

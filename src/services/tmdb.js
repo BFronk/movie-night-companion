@@ -36,3 +36,12 @@ export async function getMoviesByGenre(genreId) {
   const data = await res.json();
   return data.results;
 }
+
+export async function getMovieDetails(movieId) {
+  const response = await fetch(
+    `${BASE_URL}/movie/${movieId}?api_key=${API_KEY}&append_to_response=credits`
+  );
+
+  const data = await response.json();
+  return data;
+}

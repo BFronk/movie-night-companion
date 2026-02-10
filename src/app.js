@@ -2,8 +2,12 @@ import createElement from "./utils/createElement.js";
 import Watchlist from "./components/Watchlist.js";
 import Browse from "./components/Browse.js";
 import Nav from "./components/Nav.js";
+import MovieDetails from "./components/MovieDetails.js";
 
-let currentView = "browse";
+let appState = {
+  view: "browse",
+  selectedMovieId: null
+};
 
 export default function App() {
   const header = createElement("h1", {
@@ -14,22 +18,35 @@ export default function App() {
   const navContainer = createElement("div");
   const main = createElement("main");
 
-  function render() {
-    navContainer.replaceChildren(
-      Nav(navigate, currentView)
-    );
-
-    main.replaceChildren(
-      currentView === "watchlist"
-        ? Watchlist()
-        : Browse()
-    );
+  function setAppState(newState) {
+    appState = { ...appState, ...newState };
+    render();
   }
 
   function navigate(view) {
-    currentView = view;
-    render();
+    setAppState({ view });
   }
+
+  function render() {
+  navContainer.replaceChildren(
+    Nav(navigate, appState.view)
+  );
+
+  if (appState.view === "details") {
+    main.replaceChildren(
+      MovieDetails(appState.selectedMovieId, setAppState)
+    );
+  } else if (appState.view === "watchlist") {
+    main.replaceChildren(
+      Watchlist(setAppState)
+    );
+  } else {
+    // default: browse
+    main.replaceChildren(
+      Browse(setAppState)
+    );
+  }
+}
 
   render();
 

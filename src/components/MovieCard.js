@@ -5,7 +5,7 @@ import {
   removeFromWatchlist
 } from "../services/watchlist.js";
 
-export default function MovieCard(movie, options = {}) {
+export default function MovieCard(movie, setAppState, options = {}) {
   const poster = createElement("img", {
     src: movie.poster_path
       ? `https://image.tmdb.org/t/p/w300${movie.poster_path}`
@@ -32,29 +32,40 @@ export default function MovieCard(movie, options = {}) {
 
   if (options.removable) {
     button.textContent = "Remove from Watchlist";
-    button.addEventListener("click", () => {
-      removeFromWatchlist(movie.id);
-      card.remove();
-      rerenderApp();
-    });
+    button.addEventListener("click", e => {
+    e.stopPropagation();
+    removeFromWatchlist(movie.id);
+    card.remove();
+    rerenderApp();
+});
   } else {
     button.textContent = "Add to Watchlist";
-    button.addEventListener("click", () => {
-      addToWatchlist(movie);
-      button.textContent = "Added ✓";
-      button.disabled = true;
-      rerenderApp();
-    });
+    button.addEventListener("click", e => {
+    e.stopPropagation();
+    addToWatchlist(movie);
+    rerenderApp();
+});
   }
 
   card = createElement(
-    "div",
-    { className: "movie-card" },
-    poster,
-    title,
-    rating,
-    button
-  );
+  "div",
+  {
+    className: "movie-card",
+    onclick: () => {
+        if (!setAppState) return;
+
+
+      setAppState({
+        view: "details",
+        selectedMovieId: movie.id
+      })
+    }
+  },
+  poster,
+  title,
+  rating,
+  button
+);
 
   return card;
 }

@@ -2,7 +2,7 @@ import createElement from "../utils/createElement.js";
 import MovieCard from "./MovieCard.js";
 import { getWatchlist } from "../services/watchlist.js";
 
-export default function Watchlist() {
+export default function Watchlist(setAppState) {
   const movies = getWatchlist();
 
   if (movies.length === 0) {
@@ -15,6 +15,6 @@ export default function Watchlist() {
   return createElement(
     "div",
     { className: "main-content" },
-    ...movies.map(movie => MovieCard(movie, { removable: true }))
+    ...movies.map(movie => MovieCard(movie, setAppState, { removable: true }))
   );
 }
