@@ -11,6 +11,7 @@ import {
   getBrowseState,
   setBrowseState
 } from "../services/browseState.js";
+import FeaturedRow from "./FeaturedRow.js";
 
 const GENRES = [
   { id: 28, name: "Action" },
@@ -60,23 +61,32 @@ export default function Browse() {
   const resultsContainer = createElement("div", {
     className: "main-content"
   });
+  const featuredContainer = createElement("div", {
+  className: "featured-wrapper"
+  });
   async function renderMovies(fetchFn) {
   resultsContainer.innerHTML = "";
   resultsContainer.append(Loading());
-
+  
   const movies = await fetchFn();
   const watchlist = getWatchlist();
-
+  
   const watchlistIds = new Set(watchlist.map(m => m.id));
-
-  resultsContainer.innerHTML = "";
+  
+    resultsContainer.innerHTML = "";
 
   movies
     .filter(movie => !watchlistIds.has(movie.id))
     .forEach(movie => {
       resultsContainer.append(MovieCard(movie));
     });
-}
+    featuredContainer.innerHTML = "";
+
+    const featured = FeaturedRow(movies);
+    if (featured) {
+      featuredContainer.append(featured);
+    }
+  }
   // EVENT LISTENERS 
 
   popularBtn.addEventListener("click", () => {
@@ -119,7 +129,7 @@ export default function Browse() {
   searchInput
 );
 
-container.append(controls, resultsContainer);
+    container.append(controls, featuredContainer, resultsContainer);
 
   //  RESTORE STATE
   if (mode === "search" && query) {
