@@ -15,10 +15,15 @@ import {
 const GENRES = [
   { id: 28, name: "Action" },
   { id: 12, name: "Adventure" },
+  { id: 16, name: "Animation (Kids)" },
   { id: 35, name: "Comedy" },
   { id: 18, name: "Drama" },
+  { id: 10751, name: "Family" },
+  { id: 14, name: "Fantasy" },
   { id: 27, name: "Horror" },
-  { id: 878, name: "Sci-Fi" }
+  { id: 10749, name: "Romance" },
+  { id: 878, name: "Sci-Fi" },
+  { id: 53, name: "Thriller" }
 ];
 
 export default function Browse() {
@@ -72,7 +77,7 @@ export default function Browse() {
       resultsContainer.append(MovieCard(movie));
     });
 }
-  // 🔴 EVENT LISTENERS COME AFTER DECLARATION
+  // EVENT LISTENERS 
 
   popularBtn.addEventListener("click", () => {
     setBrowseState({ mode: "popular", query: "", genreId: null });
@@ -108,14 +113,15 @@ export default function Browse() {
     }
   });
 
-  container.append(
-    popularBtn,
-    genreSelect,
-    searchInput,
-    resultsContainer
-  );
+  const controls = createElement("div",{ className: "browse-controls" },
+  popularBtn,
+  genreSelect,
+  searchInput
+);
 
-  // 🔵 RESTORE STATE
+container.append(controls, resultsContainer);
+
+  //  RESTORE STATE
   if (mode === "search" && query) {
     renderMovies(() => searchMovies(query));
   } else if (mode === "category" && genreId) {
