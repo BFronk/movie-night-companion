@@ -64,29 +64,44 @@ export default function Browse() {
   const featuredContainer = createElement("div", {
   className: "featured-wrapper"
   });
+  
   async function renderMovies(fetchFn) {
   resultsContainer.innerHTML = "";
+  featuredContainer.innerHTML = "";
   resultsContainer.append(Loading());
-  
+
   const movies = await fetchFn();
   const watchlist = getWatchlist();
-  
   const watchlistIds = new Set(watchlist.map(m => m.id));
-  
-    resultsContainer.innerHTML = "";
+
+  let featuredMovies = [];
+
+  if (mode === "popular") {
+    featuredMovies = movies.slice(0, 6);
+  }
+
+  if (mode === "search" && movies.length) {
+    featuredMovies = movies.slice(0, 4);
+  }
+
+  const featuredIds = new Set(featuredMovies.map(m => m.id));
+
+  if (featuredMovies.length) {
+    featuredContainer.append(FeaturedRow(featuredMovies));
+  }
+
+  resultsContainer.innerHTML = "";
 
   movies
-    .filter(movie => !watchlistIds.has(movie.id))
+    .filter(
+      movie =>
+        !watchlistIds.has(movie.id) &&
+        !featuredIds.has(movie.id)
+    )
     .forEach(movie => {
       resultsContainer.append(MovieCard(movie));
     });
-    featuredContainer.innerHTML = "";
-
-    const featured = FeaturedRow(movies);
-    if (featured) {
-      featuredContainer.append(featured);
-    }
-  }
+}
   // EVENT LISTENERS 
 
   popularBtn.addEventListener("click", () => {
