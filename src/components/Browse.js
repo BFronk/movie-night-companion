@@ -85,6 +85,7 @@ export default function Browse(setAppState) {
   /* ---------- Render Logic ---------- */
 
   async function renderMovies(fetchFn) {
+    const { mode } = getBrowseState();
     const scrollY = window.scrollY;
 
     featuredContainer.innerHTML = "";
@@ -96,16 +97,18 @@ export default function Browse(setAppState) {
 
     let featuredMovies = [];
 
-    if (mode === "popular") {
-      featuredMovies = movies
-        .filter(movie => !watchlistIds.has(movie.id))
-        .slice(0, 6);
-    }
+    if (mode !== "search") {
+        if (mode === "popular") {
+            featuredMovies = movies
+            .filter(movie => !watchlistIds.has(movie.id))
+            .slice(0, 6);
+        }
 
-    if (mode === "category") {
-      featuredMovies = movies
-        .filter(movie => !watchlistIds.has(movie.id))
-        .slice(0, 4);
+        if (mode === "category") {
+            featuredMovies = movies
+            .filter(movie => !watchlistIds.has(movie.id))
+            .slice(0, 4);
+        }
     }
 
     const featuredIds = new Set(featuredMovies.map(m => m.id));
