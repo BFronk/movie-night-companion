@@ -1,16 +1,21 @@
-const STORAGE_KEY = "browse-state";
+const STORAGE_KEY = "browseState";
 
 export function getBrowseState() {
-  const data = localStorage.getItem(STORAGE_KEY);
-  return data
-    ? JSON.parse(data)
-    : { mode: "popular", query: "", genreId: null };
+  return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
+    mode: "popular",
+    query: "",
+    genreId: null,
+    viewMode: "grid"   
+  };
 }
 
-export function setBrowseState(state) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
+export function setBrowseState(updates) {
+  const current = getBrowseState();
 
-export function clearBrowseState() {
-  localStorage.removeItem(STORAGE_KEY);
+  const newState = {
+    ...current,
+    ...updates
+  };
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(newState));
 }

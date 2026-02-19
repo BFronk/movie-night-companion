@@ -1,28 +1,41 @@
 import createElement from "../utils/createElement.js";
 import Loading from "./Loading.js";
-import { getMovieDetails } from "../services/tmdb.js";
-import { addToWatchlist, getWatchlist } from "../services/watchlist.js";
-import { rerenderApp } from "../utils/rerender.js";
+import MovieCard from "./MovieCard.js";
+import { getOMDbData } from "../services/omdb.js";
+import {
+  getMovieDetails,
+  getSimilarMovies
+} from "../services/tmdb.js";
+import {
+  addToWatchlist,
+  getWatchlist
+} from "../services/watchlist.js";
 
 export default function MovieDetails(movieId, setAppState) {
-  const container = createElement("div", { className: "movie-details" });
+  const container = createElement("div", {
+    className: "movie-details"
+  });
 
   container.append(Loading());
 
   getMovieDetails(movieId).then(movie => {
     container.innerHTML = "";
 
-    /* ---------- Back Button ---------- */
+    /* Back Button */
     const backBtn = createElement(
       "button",
       {
         className: "back-btn",
-        onclick: () => setAppState({ view: "browse", selectedMovieId: null })
+        onclick: () =>
+          setAppState({
+            view: "browse",
+            selectedMovieId: null
+          })
       },
       "← Back to Browse"
     );
 
-    /* ---------- Poster ---------- */
+    /* Poster */
     const poster = createElement("img", {
       src: movie.poster_path
         ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
@@ -36,7 +49,7 @@ export default function MovieDetails(movieId, setAppState) {
       poster
     );
 
-    /* ---------- Text ---------- */
+    /* Text */
     const title = createElement("h2", {
       textContent: movie.title,
       className: "details-title"
@@ -61,23 +74,27 @@ export default function MovieDetails(movieId, setAppState) {
       textContent: cast ? `Cast: ${cast}` : ""
     });
 
-    /* ---------- Watchlist Button ---------- */
-    const inWatchlist = getWatchlist().some(m => m.id === movie.id);
+    /* Watchlist Button */
+    const watchlistIds = new Set(
+      getWatchlist().map(m => m.id)
+    );
 
     const watchlistBtn = createElement(
       "button",
       {
         className: "watchlist-btn",
-        disabled: inWatchlist,
+        disabled: watchlistIds.has(movie.id),
         onclick: () => {
           addToWatchlist(movie);
-          rerenderApp();
+          watchlistBtn.textContent = "Added ✓";
+          watchlistBtn.disabled = true;
         }
       },
-      inWatchlist ? "✓ In Watchlist" : "Add to Watchlist"
+      watchlistIds.has(movie.id)
+        ? "In Watchlist"
+        : "Add to Watchlist"
     );
 
-    /* ---------- Layout ---------- */
     const content = createElement(
       "div",
       { className: "details-content" },
@@ -88,15 +105,131 @@ export default function MovieDetails(movieId, setAppState) {
       castEl,
       watchlistBtn
     );
+    /* ---------- OMDb Extra Data ---------- */
+    getOMDbData(movie.title, movie.release_date?.slice(0, 4))
+        .then(extra => {
+            if (!extra) return;
 
-    container.append(
-      createElement(
-        "div",
-        { className: "details-view" },
-        backBtn,
-        content
-      )
+            const imdb = createElement("p", {
+            className: "details-extra",
+            textContent: `IMDb Rating: ${extra.imdbRating || "N/A"}`
+            });
+
+            const awards = createElement("p", {
+            className: "details-extra",
+            textContent: `Awards: ${extra.Awards || "N/A"}`
+            });
+
+            content.insertBefore(imdb, watchlistBtn);
+            content.insertBefore(awards, watchlistBtn);
+    });
+
+    const detailsView = createElement(
+      "div",
+      { className: "details-view" },
+      backBtn,
+      content
     );
+
+    container.append(detailsView);
+
+    /* Related Movies */
+    getSimilarMovies(movie.id).then(related => {
+      if (!related.length) return;
+
+      const filtered = related
+        .filter(m => m.id !== movie.id)
+        .slice(0, 10);
+
+      if (!filtered.length) return;
+
+      const carousel = createElement(
+        "div",
+        { className: "related-carousel fade-in" },
+        ...filtered.map(m =>
+          MovieCard(m, setAppState)
+        )
+      );
+
+      const leftBtn = createElement(
+        "button",
+        { className: "carousel-btn left" },
+        "‹"
+      );
+
+      const rightBtn = createElement(
+        "button",
+        { className: "carousel-btn right" },
+        "›"
+      );
+
+      leftBtn.onclick = () =>
+        carousel.scrollBy({
+          left: -320,
+          behavior: "smooth"
+        });
+
+      rightBtn.onclick = () =>
+        carousel.scrollBy({
+          left: 320,
+          behavior: "smooth"
+        });
+
+      function updateButtons() {
+        const {
+          scrollLeft,
+          scrollWidth,
+          clientWidth
+        } = carousel;
+
+        if (scrollLeft <= 5) {
+          leftBtn.style.opacity = "0";
+          leftBtn.style.pointerEvents = "none";
+        } else {
+          leftBtn.style.opacity = "1";
+          leftBtn.style.pointerEvents = "auto";
+        }
+
+        if (
+          scrollLeft + clientWidth >=
+          scrollWidth - 5
+        ) {
+          rightBtn.style.opacity = "0";
+          rightBtn.style.pointerEvents = "none";
+        } else {
+          rightBtn.style.opacity = "1";
+          rightBtn.style.pointerEvents = "auto";
+        }
+      }
+
+      carousel.addEventListener(
+        "scroll",
+        updateButtons
+      );
+
+      setTimeout(updateButtons, 50);
+
+      const wrapper = createElement(
+        "div",
+        { className: "carousel-wrapper" },
+        leftBtn,
+        carousel,
+        rightBtn
+      );
+
+      const section = createElement(
+        "section",
+        {},
+        createElement(
+          "h3",
+          { className: "related-title" },
+          "Related Movies"
+        ),
+        wrapper
+      );
+
+      container.append(section);
+    });
   });
 
   return container;

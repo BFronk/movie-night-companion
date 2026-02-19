@@ -45,3 +45,11 @@ export async function getMovieDetails(movieId) {
   const data = await response.json();
   return data;
 }
+
+export async function getSimilarMovies(movieId) {
+  const res = await fetch(
+    `${BASE_URL}/movie/${movieId}/similar?api_key=${API_KEY}`
+  );
+  const data = await res.json();
+  return data.results || [];
+}

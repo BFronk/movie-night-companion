@@ -14,6 +14,7 @@ import {
 } from "../services/browseState.js";
 
 let searchTimeout;
+let currentFetchFn = getPopularMovies;
 
 const GENRES = [
   { id: 28, name: "Action" },
@@ -32,7 +33,7 @@ const GENRES = [
 export default function Browse(setAppState) {
   const container = createElement("div");
 
-  const { mode, query, genreId } = getBrowseState();
+  const { mode, query, genreId, viewMode } = getBrowseState();
 
   /* ---------- Controls ---------- */
 
@@ -62,13 +63,38 @@ export default function Browse(setAppState) {
     value: query
   });
 
+  /* ---------- View Toggle ---------- */
+
+  const viewToggle = createElement(
+    "button",
+    {
+      className: "browse-btn",
+      onclick: () => {
+        const { viewMode } = getBrowseState();
+        const newMode = viewMode === "grid" ? "list" : "grid";
+        setBrowseState({ viewMode: newMode });
+        renderMovies(currentFetchFn);
+      }
+    },
+    viewMode === "grid" ? "List View" : "Grid View"
+  );
+
   const controls = createElement(
     "div",
     { className: "browse-controls" },
     popularBtn,
     genreSelect,
-    searchInput
+    searchInput,
+    viewToggle
   );
+
+  /* ---------- Sticky Scroll (Safe) ---------- */
+
+  const handleScroll = () => {
+    controls.classList.toggle("scrolled", window.scrollY > 150);
+  };
+
+  window.addEventListener("scroll", handleScroll);
 
   /* ---------- Containers ---------- */
 
@@ -85,7 +111,9 @@ export default function Browse(setAppState) {
   /* ---------- Render Logic ---------- */
 
   async function renderMovies(fetchFn) {
-    const { mode } = getBrowseState();
+    currentFetchFn = fetchFn;
+
+    const { mode, viewMode } = getBrowseState();
     const scrollY = window.scrollY;
 
     featuredContainer.innerHTML = "";
@@ -95,35 +123,57 @@ export default function Browse(setAppState) {
     const movies = await fetchFn();
     const watchlistIds = new Set(getWatchlist().map(m => m.id));
 
+    // Clear loading
+    resultsContainer.innerHTML = "";
+
+    // Apply grid/list layout
+    resultsContainer.classList.toggle(
+      "list-view",
+      viewMode === "list"
+    );
+
+    // Update toggle text
+    viewToggle.textContent =
+      viewMode === "grid" ? "List View" : "Grid View";
+
     let featuredMovies = [];
 
-    if (mode !== "search") {
-        if (mode === "popular") {
-            featuredMovies = movies
-            .filter(movie => !watchlistIds.has(movie.id))
-            .slice(0, 6);
-        }
+    // Only show featured in GRID mode
+    if (viewMode === "grid" && mode !== "search") {
+      if (mode === "popular") {
+        featuredMovies = movies
+          .filter(movie => !watchlistIds.has(movie.id))
+          .slice(0, 6);
+      }
 
-        if (mode === "category") {
-            featuredMovies = movies
-            .filter(movie => !watchlistIds.has(movie.id))
-            .slice(0, 4);
-        }
+      if (mode === "category") {
+        featuredMovies = movies
+          .filter(movie => !watchlistIds.has(movie.id))
+          .slice(0, 4);
+      }
     }
 
-    const featuredIds = new Set(featuredMovies.map(m => m.id));
+    const featuredIds = new Set(
+      featuredMovies.map(m => m.id)
+    );
 
     if (featuredMovies.length) {
       const featuredCards = featuredMovies.map(movie =>
         MovieCard(movie, setAppState)
-        );
-        featuredContainer.append(
-        createElement("div", { className: "featured-label" }, "Featured")
-        );
-        featuredContainer.append(FeaturedRow(featuredCards));
-    }
+      );
 
-    resultsContainer.innerHTML = "";
+      featuredContainer.append(
+        createElement(
+          "div",
+          { className: "featured-label" },
+          "Featured"
+        )
+      );
+
+      featuredContainer.append(
+        FeaturedRow(featuredCards)
+      );
+    }
 
     movies
       .filter(
@@ -132,7 +182,9 @@ export default function Browse(setAppState) {
           !featuredIds.has(movie.id)
       )
       .forEach(movie => {
-        resultsContainer.append(MovieCard(movie, setAppState));
+        resultsContainer.append(
+          MovieCard(movie, setAppState, { viewMode })
+        );
       });
 
     requestAnimationFrame(() => {
@@ -143,7 +195,12 @@ export default function Browse(setAppState) {
   /* ---------- Events ---------- */
 
   popularBtn.addEventListener("click", () => {
-    setBrowseState({ mode: "popular", query: "", genreId: null });
+    setBrowseState({
+      mode: "popular",
+      query: "",
+      genreId: null
+    });
+
     searchInput.value = "";
     renderMovies(getPopularMovies);
   });
@@ -159,7 +216,9 @@ export default function Browse(setAppState) {
     });
 
     searchInput.value = "";
-    renderMovies(() => getMoviesByGenre(selectedGenre));
+    renderMovies(() =>
+      getMoviesByGenre(selectedGenre)
+    );
   });
 
   searchInput.addEventListener("input", () => {
@@ -168,12 +227,21 @@ export default function Browse(setAppState) {
 
     searchTimeout = setTimeout(() => {
       if (!value) {
-        setBrowseState({ mode: "popular", query: "", genreId: null });
+        setBrowseState({
+          mode: "popular",
+          query: "",
+          genreId: null
+        });
         renderMovies(getPopularMovies);
         return;
       }
 
-      setBrowseState({ mode: "search", query: value, genreId: null });
+      setBrowseState({
+        mode: "search",
+        query: value,
+        genreId: null
+      });
+
       renderMovies(() => searchMovies(value));
     }, 350);
   });
@@ -184,7 +252,9 @@ export default function Browse(setAppState) {
     renderMovies(() => searchMovies(query));
   } else if (mode === "category" && genreId) {
     genreSelect.value = genreId;
-    renderMovies(() => getMoviesByGenre(genreId));
+    renderMovies(() =>
+      getMoviesByGenre(genreId)
+    );
   } else {
     renderMovies(getPopularMovies);
   }

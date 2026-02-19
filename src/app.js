@@ -32,18 +32,17 @@ export default function App() {
     Nav(navigate, appState.view)
   );
 
+  if (appState.view === "browse") {
+    main.replaceChildren(Browse(setAppState));
+  }
+
+  if (appState.view === "watchlist") {
+    main.replaceChildren(Watchlist(setAppState));
+  }
+
   if (appState.view === "details") {
     main.replaceChildren(
       MovieDetails(appState.selectedMovieId, setAppState)
-    );
-  } else if (appState.view === "watchlist") {
-    main.replaceChildren(
-      Watchlist(setAppState)
-    );
-  } else {
-    // default: browse
-    main.replaceChildren(
-      Browse(setAppState)
     );
   }
 }
